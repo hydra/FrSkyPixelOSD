@@ -27,9 +27,9 @@ Up to now, iNav,Betaflight,ArduPilot are all working on supporting on it.
 ### OSDMini for Flight controller factories
 #### Specifications:
 * Size:              7x7x2 (LxWxH in mm)
-* Current:           35mA @ 3.3V
+* Current:           20mA @ 3.3V
 * Operating Voltage: 3.3v
-* Weight：           <1g
+* Weight：           0.3g
 
 #### Interface
 * 3.3v：   VCC 3.3V
