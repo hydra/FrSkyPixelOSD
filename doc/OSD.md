@@ -1,5 +1,5 @@
-FrSky OSD
-=========
+FrSky Pixel OSD
+===============
 
 - Vector based drawing with access to individual pixels.
 - No implicit drawing by itself, all drawing commands must be issued by the host.

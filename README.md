@@ -1,5 +1,5 @@
-# PixelOSD
-PixelOSD is a pixel-based OSD product launched by FrSky.
+# FrSkyPixelOSD
+FrSkyPixelOSD is a pixel-based OSD product launched by FrSky.
 It allows users to set the content and location of the OSD based on graphics.The protocol & API interface definition are public to whom
 may want to develop on it.
 
