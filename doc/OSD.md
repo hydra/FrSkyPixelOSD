@@ -13,7 +13,7 @@ FrSky OSD
 The OSD exposes a vector API on top of a fixed size canvas. Hosts shouldn't
 make assumptions about the canvas size and instead query the OSD for it using
 the `OSD_CMD_INFO` command. Point `(0, 0)` corresponds to the top left of the
-canvas, with `X` coordinates increasing downwards and `Y` coordinates increasing
+canvas, with `Y` coordinates increasing downwards and `X` coordinates increasing
 to the right.
 
 ![Coordinates](images/coordinates.png "OSD Coordinates")
@@ -25,6 +25,11 @@ The drawing system allows arbitrary affine transformations by implementing a
 3x3 Current Transformation Matrix. This matrix can be used to e.g. rotate
 and/or scale any lines or shapes drawn into the canvas. The API provides
 several helper functions for easily manipulating the matrix.
+
+Most functions manipulate the matrix by creating a temporary matrix `M` (where
+M can be a translation, scale rotation...) and setting `CTM = CTM x M`. For some
+functions, there's a reverse function provided (ending with the `_REV`) prefix)
+that performs the multiplication in reverse i.e. `CTM = M x CTM`.
 
 ## Context stack
 
@@ -225,7 +230,8 @@ viewport/grid size can change at runtime depending on the format used for the ca
 input.
 
 Arguments:
-- `max_version` **uint8_t** Maximum protocol version understood by the host. Set to 1.
+- `max_version` **uint8_t** Maximum protocol version understood by the host. Set to the maximum protocol version understood by your
+driver (`1` or `2`).
 
 Returns:
 
@@ -301,6 +307,36 @@ Enables or disables drawing on top of the video.
 
 Arguments:
 - `enabled` **uint8_t**
+
+### OSD_CMD_GET_SETTINGS = 9            (Since API 2)
+Returns the settings for the OSD.
+
+Arguments:
+- `settings_version` **uint8_t** Request settings version.Must be at least `2`
+
+Returns:
+- `settings_version` **uint8_t** Version of the settings returned. Might be lower than the version requested.
+
+#### For version 2:
+- `brightness` **int8_t** Brightness applied to all colors. Positive values make
+colors brigher.
+- `horizontal_offset` **int8_t** Moves the area the OSD draws into horizontally.
+Positive values move the area to the right of the screen.
+- `vertical_offset` **int8_t** Moves thea area the OSD draws into vertically.
+Positive values move the area to the bottom of the screen.
+
+### OSD_CMD_SET_SETTINGS = 9            (Since API 2)
+Saves the current settings in volatile storage. The arguments follow the same structure and
+semantics than the returned value of `OSD_CMD_GET_SETTINGS`. It also returns the same value
+as `OSD_CMD_GET_SETTINGS`.
+
+### OSD_CMD_SAVE_SETTINGS = 10          (Since API 2)
+Saves the current settings from volatile storage into non-volatile storage.
+
+Returns:
+- `saved` **uint8_t** `1` if succesful. If the settings could not be written to
+non-volatile storage an error will be returned using the common error return mechanism.
+
 
 ### OSD_CMD_TRANSACTION_BEGIN = 16
 Begins a new transaction.
@@ -626,6 +662,106 @@ Arguments:
 - `m31` **float32**
 - `m32` **float32**
 
+### OSD_CMD_CTM_TRANSLATE_REV = 89      (Since API 2)
+Reverse version of `OSD_CMD_CTM_TRANSLATE`.
+
+Arguments:
+
+- `Tx` **float32**
+- `Ty` **float32**
+
+### OSD_CMD_CTM_SCALE_REV = 90          (Since API 2)
+Reverse version of `OSD_CMD_CTM_SCALE`.
+
+Arguments:
+
+- `Sx` **float32**
+- `Sy` **float32**
+
+### OSD_CMD_CTM_ROTATE_REV = 91,        (Since API 2)
+Reverse version of `OSD_CMD_CTM_ROTATE`.
+
+Arguments:
+
+- `angle` **float32**
+
+### OSD_CMD_CTM_ROTATE_ABOUT_REV = 92   (Since API 2)
+Reverse version of `OSD_CMD_CTM_ROTATE_ABOUT_REV`.
+
+Arguments:
+
+- `angle` **float32**
+- `cx` **float32**
+- `cy` **float32**
+
+### OSD_CMD_CTM_SHEAR_REV = 93          (Since API 2)
+Reverse version of `OSD_CMD_CTM_SHEAR_REV`.
+
+Arguments:
+
+- `sx` **float32**
+- `sy` **float32**
+
+### OSD_CMD_CTM_SHEAR_ABOUT_REV = 94    (Since API 2)
+Reverse version of `OSD_CMD_CTM_SHEAR_ABOUT_REV`.
+
+
+Arguments:
+
+- `sx` **float32**
+- `sy` **float32**
+- `cx` **float32**
+- `cy` **float32**
+
+### OSD_CMD_CTM_MULTIPLY_REV = 95       (Since API 2)
+Reverse version of `OSD_CMD_CTM_MULTIPLY_REV`.
+
+Arguments:
+
+- `m11` **float32**
+- `m12` **float32**
+- `m21` **float32**
+- `m22` **float32**
+- `m31` **float32**
+- `m32` **float32**
+
+### OSD_CMD_CTM_I16TRANSLATE = 96       (Since API 2)
+A more space efficient version of `OSD_CMD_CTM_TRANSLATE` which can be
+used when less precission is acceptable. Instead of accepting 2 `float32`
+arguments, it accepts 2 `int16_t`.
+
+Arguments:
+
+- `Tx` **int16_t**
+- `Ty` **int16_t**
+
+### OSD_CMD_CTM_U16ROTATE = 97          (Since API 2)
+A more space efficient version of `OSD_CMD_CTM_ROTATE` which can be used
+when less precission is acceptable. Instead of a accepting a `float32`
+argument, it accepts an `uint16_t` which is quantized to a whole counter-clockwise
+rotation, so e.g. `0` means no rotation, `UINT16_MAX` means almost `2*π`, and
+`UINT16_MAX / 2` represents `π` radians.
+
+Arguments:
+
+- `angle` **uint16_t**
+
+### OSD_CMD_CTM_I16TRANSLATE_REV = 98   (Since API 2)
+Reverse version of `OSD_CMD_CTM_I16TRANSLATE`.
+
+Arguments:
+
+- `Tx` **int16_t**
+- `Ty` **int16_t**
+
+### OSD_CMD_CTM_U16_ROTATE_REV = 99     (Since API 2)
+Reverse version of `OSD_CMD_CTM_U16ROTATE`.
+
+Arguments:
+
+- `angle` **float32**
+
+
 ### OSD_CMD_CONTEXT_PUSH = 100
 Pushes a copy of the current context onto the stack and selects it as the
 current context.
@@ -654,6 +790,58 @@ Arguments:
 - `str_size` **uvarint_t**
 - `str` **const char *** NULL terminated C string
 
+
+### OSD_CMD_DRAW_GRID_CHR_2 = 112       (Since API 2)
+A more compact variant of `OSD_CMD_DRAW_GRID_CHR` which uses 3 bytes per
+character instead of 5 by using an slightly more complicated encoding and
+is limited to characters `< 512`. Note that the arguments use specific
+bit widths.
+
+Arguments:
+
+- `column` **unsigned:5**
+- `row` **unsigned:4**
+- `chr` **unsigned:9**
+- `opts` **unsigned:3**
+- `as_mask` **unsigned:1** Draws the character as a mask
+- `color` **unsigned:2**    Color to use when as_mask = 1
+
+### OSD_CMD_DRAW_GRID_STR_2 = 113       (Since API 2)
+A more compact variant of `OSD_CMD_DRAW_GRID_STR` that saves 2 bytes per call.
+Note that the arguments use specific bit widths and the string is NOT null
+terminated.
+
+Arguments:
+
+- `column` **unsigned:5**
+- `row` **unsigned:4**
+- `opts` **unsigned:3**
+- `str_size` **unsigned:4** For sizes <= 15. Otherwise set to 0 and use `str_variable_size`
+- `str_variable_size` **uvarint_t** Only present if `str_size = 0`
+- `str` **const char *** NOT NULL array of characters
+
+### OSD_CMD_WIDGET_SET_CONFIG = 115     (Since API 2)
+Configure a widget identified by its `widget_id`. Widgets must be
+configured before they can be drawn. Typically, this should be called
+once per widget during startup. Updates should be performed with
+`OSD_CMD_WIDGET_DRAW`. Since configuration data varies by widget,
+the payload changes depenending on `widget_id`. See [WIDGETS](WIDGETS.md) for
+additional information.
+
+### OSD_CMD_WIDGET_DRAW = 116           (Since API 2)
+Draws the widget identified by its `widget_id`. If the widget was already drawn,
+it will delete itself manipulating the minimum required amount of pixels before
+redrawing. Since the displayed data varies by widget, the payload changes depenending
+on `widget_id`. See [WIDGETS](WIDGETS.md) for additional information.
+
+### OSD_CMD_WIDGET_ERASE = 117          (Since API 2)
+Erases the widget identified by its `widget_id`. Note that widgets know how to
+redraw themselves while minimizing the amount of operations, so you should
+only manually erase them if you want to remove them from the screen.
+
+Arguments:
+- `widget_id` **uint8_t**
+
 ### OSD_CMD_REBOOT = 120
 Reboots the OSD
 
@@ -665,9 +853,10 @@ Arguments:
 Used by the bootloader to provide firmware upgrades. 
 
 ### OSD_CMD_SET_DATA_RATE = 122
-Changes the data rate to the OSD. When using the UART API, the
-argument indicates the new `bps`. The change of speed is performed
-after the response to this command has been sent to the host.
+Changes the data rate of the OSD temporarily until the next reboot.
+When using the UART API, the argument indicates the new `bps`.
+The change of speed is performed after the response to this command
+has been sent to the host.
 
 Arguments:
 - `data_rate` **uint32_t** Requested data rate
