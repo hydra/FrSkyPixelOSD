@@ -788,7 +788,7 @@ Arguments:
 - `row` **uint8_t**
 - `opts` **bitmap_opts_t**
 - `str_size` **uvarint_t**
-- `str` **const char *** NULL terminated C string
+- `str` **const char \*** NULL terminated C string
 
 
 ### OSD_CMD_DRAW_GRID_CHR_2 = 112       (Since API 2)
@@ -818,7 +818,7 @@ Arguments:
 - `opts` **unsigned:3**
 - `str_size` **unsigned:4** For sizes <= 15. Otherwise set to 0 and use `str_variable_size`
 - `str_variable_size` **uvarint_t** Only present if `str_size = 0`
-- `str` **const char *** NOT NULL array of characters
+- `str` **const char \*** NOT NULL array of characters
 
 ### OSD_CMD_WIDGET_SET_CONFIG = 115     (Since API 2)
 Configure a widget identified by its `widget_id`. Widgets must be

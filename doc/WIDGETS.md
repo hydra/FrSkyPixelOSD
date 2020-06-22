@@ -241,9 +241,9 @@ to displaying `km` (using `divisor` and `divided_unit`).
 
 The graph widget displays an autoscaling and autoshifting graph that displays a value over time.
 Each time a new value is provided, all graph is shifted 1 pixel to the left and the new value is
-appended to the existing ones. By default, graphs batch updates in groups of 4 pixels to increase
-performance. For slowly updated graphs (e.g. > 1Hz), you can disable batching using the
-`WIDGET_GRAPH_OPTION_IMMEDIATE` option.
+appended to the existing ones. By default, graphs are updated every time a new value is added. If
+you have a very frequenly updated graph, you can batch updates in groups of 4 pixels to increase
+performance by using the `WIDGET_GRAPH_OPTION_BATCHED` option.
 
 Due to the implementation of the graph, you should make sure no other elements are drawn over it,
 since the graph doesn't store the raw values you send it and instead manipulates the video memory
@@ -259,8 +259,8 @@ typedef struct widget_graph_config_s
     uint8_t options;
     uint8_t y_label_count; // The amount of labels to draw next to the y axis [0, 7]
     uint8_t y_label_width; // The width of each label in character slots including the unit [0, 15]
-    osd_unit_t unit;       // The unit used to draw the y labels
     uint8_t initial_scale; // The log2 of the initial scale of the graph (i.e. initial_scale = 3, means the scale will be 8 initially)
+    osd_unit_t unit;       // The unit used to draw the y labels
 } __attribute__((packed)) widget_graph_config_t;
 ```
 
@@ -271,7 +271,7 @@ Where:
 ```c
 typedef enum
 {
-    WIDGET_GRAPH_OPTION_IMMEDIATE = 1 << 0, // Don't batch updates in groups of 4
+    WIDGET_GRAPH_OPTION_BATCHED = 1 << 0, // Batch updates in groups of 4
 } widget_graph_options_t;
 ```
 
@@ -286,7 +286,7 @@ and the following payload:
 ```c
 typedef struct widget_graph_draw_s
 {
-    int16_t value;
+    int32_t value : 24;
 } __attribute__((packed)) widget_graph_draw_t;
 ```
 
